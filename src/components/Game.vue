@@ -1,5 +1,45 @@
 <template>
   <v-container>
+    <!-- End Game dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="dialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Game Over
+          </v-card-title>
+
+          <v-card-text style="text-align:center;">
+            You finished the game with:
+          </v-card-text>
+          <v-card-text style="text-align:center;">
+            Account: £{{cash}}
+          </v-card-text>
+          <v-card-text style="text-align:center;">
+            Debt: £{{debt}}
+          </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              color="primary"
+              text
+              @click="dialog = false"
+            >
+              New Game
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
     <v-layout wrap>
         <v-flex>
         <h1 class="display-2 font-weight-bold mb-3">
@@ -10,11 +50,11 @@
 
     <v-layout wrap>
      <!-- Dashboard -->
-     <v-flex xs4 mb-3 style="margin-right:25%;">
+     <v-flex xs12 md4 mb-3>
        <v-card style="text-align:center;">
          <v-flex pt-5>
            <h4>Cash</h4>
-           £{{bank}}
+           £{{cash}}
          </v-flex>
          <v-flex>
            <h4>Debt</h4>
@@ -31,14 +71,15 @@
      </v-flex>
 
      <!-- Products -->
-     <v-flex xs4>
+     <v-flex xs12 md7 offset-md1>
        <v-layout row>
-         <v-flex xs12 mb-3 v-for="(product,i) in products" :key="i">
+         <v-flex xs12 mx-3 mb-3 v-for="(product,i) in products" :key="i">
           <product :product="product">
           </product>
          </v-flex>
        </v-layout>
      </v-flex>
+
     </v-layout>
 
   </v-container>
@@ -46,15 +87,17 @@
 
 <script>
 import Product from "./Product";
-import { isNullOrUndefined } from 'util';
-import { Z_NEED_DICT } from 'zlib';
 export default {
   components: {
     Product
   },
   data: () => ({
+    dialog: false,
     turnBtn: "Next Day",
     days:1,
+    inventoryAmount: 100,
+    debt: 2000,
+    cash: 2000,
     products:[
       {
         id: 0,
@@ -189,8 +232,6 @@ export default {
         outrageousmax: 8000,
       }
     ],
-    bank: 2000,
-    inventoryAmount: 100,
     inventoryProducts:[
       //Push object of products into here that includes name, id, and price bought at
     ],
@@ -201,7 +242,6 @@ export default {
       {name:"Leeds"},
       {name:"Bristol"},
     ],
-    debt: 2000,
     events:[
       {
 
@@ -256,14 +296,15 @@ export default {
     nextDay(){
       const self = this;
       if(self.days < 30){
-        //Choose new location
+        //Choose new location - Use vuetify dialog
 
         self.days++;
         self.days == 30 ? self.turnBtn = "End" : self.turnBtn = "Next Day"
         self.getPrices();
 
       }else{
-        console.log(`Game over, you finished the game with £${self.bank} ` )
+        self.dialog = true;
+        console.log(`Game over, you finished the game with £${self.cash} ` )
       }
 
     }
@@ -278,5 +319,11 @@ export default {
 </script>
 
 <style scoped>
+@media (max-width: 100px) {
+  /* CSS that should be displayed if width is equal to or less than 800px goes here */
+  .marginright{
+    margin-right: 15%;
+  }
+}
 
 </style>
