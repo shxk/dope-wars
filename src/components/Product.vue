@@ -10,7 +10,7 @@
                     <v-col cols="12"><h3> - </h3></v-col>
                     <v-col cols="12"> <h4>£{{Number(product.price).toLocaleString()}}</h4></v-col>
                     <v-col cols="3"> <h4>Inventory : {{ currentProdInv(product) }} </h4></v-col>
-                    <v-col cols="6"> <h4>Avg. Purchase Price : £{{ Number(avgPurchasePrice(product)).toLocaleString() }} </h4></v-col>
+                    <v-col cols="6"> <h4>Avg : £{{ Number(avgPurchasePrice(product)).toLocaleString() }} </h4></v-col>
                 </v-row>
                 </template>
             </v-expansion-panel-header>
@@ -319,7 +319,7 @@ export default {
             if(purchasePrice <= self.cash && self.quantity > 0){
                 for (let i = 0; i < self.quantity; i++) {
                     //push without memory reference so it is a copy not a linked thing
-                    self.inventoryproducts.push(product)
+                    self.inventoryproducts.push(JSON.parse(JSON.stringify(product)))
                 } 
                 self.$emit('updateCashBuy', purchasePrice)    
             }

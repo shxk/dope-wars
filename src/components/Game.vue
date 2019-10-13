@@ -1,6 +1,5 @@
 <template>
     <!-- Whats Left:
-      selling - & avg amount product was bought for display
       locations
       events & Implement more than 1 random event
       police
@@ -11,6 +10,77 @@
     <div class="text-center">
       <v-dialog
         v-model="dialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Game Over
+          </v-card-title>
+
+          <v-card-text style="text-align:center;">
+            You finished the game with:
+          </v-card-text>
+          <v-card-text style="text-align:center;">
+            Account: £{{Number(cash).toLocaleString()}}
+          </v-card-text>
+          <v-card-text style="text-align:center;">
+            Debt: £{{Number(debt).toLocaleString()}}
+          </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              color="primary"
+              text
+              @click="dialog = false"
+            >
+              New Game
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
+    <!-- Move Location dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="locationDialog"
+        persistent 
+        width="500"
+      >
+        <v-card
+          class="mx-auto"
+          tile
+        >
+          <v-list rounded>
+            <v-subheader>MOVE LOCATION</v-subheader>
+            <v-list-item-group v-model="currentLocation.id" color="primary">
+              <v-list-item
+                v-for="(location, i) in locations"
+                :key="i" @click="changeLocation(location)" :disabled="isLocationDisabled(location)"
+              >
+                <v-list-item-icon>
+                  <v-icon v-text="location.icon"></v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title v-text="location.name"></v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list-item-group>
+          </v-list>
+        </v-card>
+      </v-dialog>
+    </div>
+
+    <!-- Events dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="eventDialog"
         width="500"
       >
         <v-card>
@@ -66,7 +136,7 @@
               </h1>
              </v-flex>
              <v-flex xs6>
-              <h1>Location</h1>
+              <h1>{{currentLocation.name}}</h1>
              </v-flex>
            </v-layout>
 
@@ -116,10 +186,12 @@ export default {
   },
   data: () => ({
     dialog: false,
+    locationDialog: false,
+    eventDialog: false,
     turnBtn: "Next Day",
     days:1,
     inventoryAmount: 100,
-    debt: 2000,
+    debt: 5500,
     cash: 2000,
     products:[
       {
@@ -259,12 +331,13 @@ export default {
       //Push object of products into here that includes name, id, and price bought at
     ],
     locations:[
-      {name:"London"},
-      {name:"Manchester"},
-      {name:"Birmingham"},
-      {name:"Leeds"},
-      {name:"Bristol"},
+      {id: 0, name:"London", icon: 'mdi-clock'},
+      {id: 1, name:"Manchester", icon: 'mdi-clock'},
+      {id: 2, name:"Birmingham", icon: 'mdi-clock'},
+      {id: 3, name:"Leeds", icon: 'mdi-clock'},
+      {id: 4, name:"Bristol" , icon: 'mdi-clock'},
     ],
+    currentLocation: {},
     events:[
       {
 
@@ -272,12 +345,20 @@ export default {
     ]
   }),
   computed:{
-    isExpandDisable(){
-      return this.$store.state.expandDisable
-    }
+    
 
   },
   methods:{
+    isLocationDisabled(location){
+      const self = this;
+
+      if(location.id == self.currentLocation.id){
+        return true
+      }else{
+        return false
+      }
+      
+    },
     getPrices(){
       const self = this;
       let eventInformation = self.randomiseEvent();
@@ -327,17 +408,10 @@ export default {
     nextDay(){
       const self = this;
       if(self.days < 30){
-        //Choose new location - Use vuetify dialog
-
-        self.days++;
-        self.days == 30 ? self.turnBtn = "End" : self.turnBtn = "Next Day"
-        self.getPrices();
-
+        self.locationDialog = true;
       }else{
         self.dialog = true;
-        console.log(`Game over, you finished the game with £${self.cash} ` )
       }
-
     },
     updateCashBuy(payload){
       const self = this;
@@ -352,12 +426,30 @@ export default {
       console.log(payload)
 
       self.cash += payload;
-    }
+    },
+    changeLocation(location){
+      const self = this;
+      self.currentLocation = location
 
+      self.days++;
+      self.days == 30 ? self.turnBtn = "End" : self.turnBtn = "Next Day"
+
+      if(self.debt >0){
+        self.debtIncrease();
+      }
+      self.getPrices();
+
+      self.locationDialog = false;
+    },
+    debtIncrease(){
+      const self = this;
+      self.debt = Math.floor(self.debt * 1.1)
+    }
   },
   created(){
     const self = this;
     self.getPrices();
+    self.currentLocation = self.locations[0];
 
   }
 };
