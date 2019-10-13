@@ -1,9 +1,8 @@
 <template>
     <!-- Whats Left:
-      locations
       events & Implement more than 1 random event
       police
-      Debt 
+      collapse tab when going next day
       -->
   <v-container>
     <!-- End Game dialog box  -->
@@ -29,6 +28,9 @@
           <v-card-text style="text-align:center;">
             Debt: £{{Number(debt).toLocaleString()}}
           </v-card-text>
+          <v-card-text style="text-align:center;">
+            Final Amount: £{{Number(cash-debt).toLocaleString()}}
+          </v-card-text>
 
           <v-divider></v-divider>
 
@@ -37,7 +39,7 @@
             <v-btn
               color="primary"
               text
-              @click="dialog = false"
+              @click="newGame()"
             >
               New Game
             </v-btn>
@@ -88,17 +90,72 @@
             class="headline grey lighten-2"
             primary-title
           >
-            Game Over
+            News bulletin
           </v-card-title>
 
           <v-card-text style="text-align:center;">
-            You finished the game with:
+            <v-list v-for="(event, i) in currentEvents" :key="i">
+              <li :class="{bottom: event.type == 0, outrageous: event.type == 1}">{{event.message}}</li>
+            </v-list>
           </v-card-text>
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              color="primary"
+              text
+              @click="eventDialog = false"
+            >
+              Okay
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
+    <!-- Pay debt dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="debtDialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Pay Debt
+          </v-card-title>
+
           <v-card-text style="text-align:center;">
-            Account: £{{cash}}
-          </v-card-text>
-          <v-card-text style="text-align:center;">
-            Debt: £{{debt}}
+            <v-row>
+              <v-col class="pr-4">
+                <v-slider
+                  v-model="payDebtAmount"
+                  class="align-center"
+                  :max="maxPayDebtAmountComputed"
+                  :min="0"
+                  hide-details
+                >
+                  <template v-slot:append>
+                    <v-text-field
+                      v-model="payDebtAmount"
+                      class="mt-0 pt-0"
+                      hide-details
+                      single-line
+                      type="number"
+                      style="width: 60px"
+                    ></v-text-field>
+                  </template>
+                </v-slider>
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col>
+                <v-btn color="success" @click="payDebt()">Pay</v-btn>
+              </v-col>
+            </v-row>
           </v-card-text>
 
           <v-divider></v-divider>
@@ -108,22 +165,14 @@
             <v-btn
               color="primary"
               text
-              @click="dialog = false"
+              @click="debtDialog = false"
             >
-              New Game
+              Close
             </v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
     </div>
-
-    <!-- <v-layout wrap>
-        <v-flex>
-        <h1 class="display-2 font-weight-bold mb-3">
-          Day {{days}}/30
-        </h1>
-      </v-flex>
-    </v-layout> -->
 
     <v-layout wrap>
      <!-- Dashboard -->
@@ -155,9 +204,14 @@
              </v-flex>
            </v-layout>
 
-         <v-flex mt-3 pb-5>
-           <v-btn color="info" @click="nextDay">{{turnBtn}}</v-btn>
-         </v-flex>
+            <v-layout>
+              <v-flex xs4 mt-3 pb-5>
+                <v-btn text color="warning" @click="debtDialog = true">Pay debt</v-btn>
+              </v-flex>
+              <v-flex xs4 mt-3 pb-5>
+                <v-btn color="info" @click="nextDay">{{turnBtn}}</v-btn>
+              </v-flex>
+          </v-layout>
        </v-card>
      </v-flex>
 
@@ -188,9 +242,11 @@ export default {
     dialog: false,
     locationDialog: false,
     eventDialog: false,
+    debtDialog: false,
     turnBtn: "Next Day",
     days:1,
     inventoryAmount: 100,
+    payDebtAmount:0,
     debt: 5500,
     cash: 2000,
     products:[
@@ -204,6 +260,16 @@ export default {
         bottomoutmax: 13000,
         outrageousmin: 60000,
         outrageousmax: 120000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"There's been a suspicious amount of cocaine pumped into the city... prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Cops have made a massive drug bust, cocaine prices have skyrocketed!",
+        }
       },
       {
         id:1,
@@ -215,6 +281,16 @@ export default {
         bottomoutmax: 5000,
         outrageousmin: 35000,
         outrageousmax: 50000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Market is flooded with cheap heroin!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Addicts can't get enough. Heroin prices are up!",
+        }
       },
       {
         id:2,
@@ -226,6 +302,16 @@ export default {
         bottomoutmax: 100,
         outrageousmin: 400,
         outrageousmax: 700,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Speed prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Speed prices are up!",
+        }
       },
       {
         id:3,
@@ -237,6 +323,16 @@ export default {
         bottomoutmax: 250,
         outrageousmin: 1100,
         outrageousmax: 1900,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"New supplier been in the city undercutting the weed prices!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Huge amounts of weed seized! Prices have risen",
+        }
       },
       {
         id:4,
@@ -248,6 +344,16 @@ export default {
         bottomoutmax: 450,
         outrageousmin: 2500,
         outrageousmax: 7000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Opium prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Opium addiction! Prices are up",
+        }
       },
       {
         id:5,
@@ -259,6 +365,16 @@ export default {
         bottomoutmax: 1000,
         outrageousmin: 4000,
         outrageousmax: 6000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"PCP prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"PCP prices are up!",
+        }
       },
       {
         id:6,
@@ -270,6 +386,16 @@ export default {
         bottomoutmax: 250,
         outrageousmin: 5000,
         outrageousmax: 8000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Meth prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"A strange blue coloured meth has got people hooked. People are paying outrageous amounts",
+        }
       },
       {
         id:7,
@@ -281,6 +407,16 @@ export default {
         bottomoutmax: 6,
         outrageousmin: 110,
         outrageousmax: 190,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Local pharmacy raided, cheap ludes available !",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"People can't sleep it seems, Ludes have risen in price!",
+        }
       },
       {
         id:8,
@@ -292,6 +428,16 @@ export default {
         bottomoutmax: 200,
         outrageousmin: 1500,
         outrageousmax: 1800,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Hash prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Hash prices are up!",
+        }
       },
       {
         id:9,
@@ -303,6 +449,16 @@ export default {
         bottomoutmax: 150,
         outrageousmin: 900,
         outrageousmax: 1200,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Cactus Jack's in town! Cheap peyote.",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Peyote prices are up!",
+        }
       },
       {
         id:10,
@@ -314,6 +470,16 @@ export default {
         bottomoutmax: 50,
         outrageousmin: 250,
         outrageousmax: 350,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"X gon give it to ya. Ecstasy prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"X ain't gon give it to ya. Ecstasy prices are up!",
+        }
       },
       {
         id:11,
@@ -325,6 +491,16 @@ export default {
         bottomoutmax: 1000,
         outrageousmin: 5000,
         outrageousmax: 8000,
+        bottom:false,
+        outrageous:false,
+        bottomEvent:{
+          type:0,
+          message:"Cheap acid! prices have bottomed out!",
+        },
+        outrageousEvent:{
+          type:1,
+          message:"Acid prices are up!",
+        }
       }
     ],
     inventoryProducts:[
@@ -338,17 +514,23 @@ export default {
       {id: 4, name:"Bristol" , icon: 'mdi-clock'},
     ],
     currentLocation: {},
-    events:[
-      {
-
-      }
+    currentEvents:[
     ]
   }),
   computed:{
-    
-
+    maxPayDebtAmountComputed(){
+      const self = this;
+      if(self.cash < self.debt){
+        return self.cash
+      }else{
+        return self.debt
+      }
+    }
   },
   methods:{
+    newGame(){
+      window.location.reload()
+    },
     isLocationDisabled(location){
       const self = this;
 
@@ -361,46 +543,69 @@ export default {
     },
     getPrices(){
       const self = this;
+      //Randomise event
       let eventInformation = self.randomiseEvent();
+      //Empty array so that it doesn't push new events on old ones
+      self.currentEvents = [];
 
       self.products.forEach(element => {
         let min = element.minprice;
         let max = element.maxprice;
+        //Default the special prices so it doesn't carry on from previous turn
+        element.outrageous = false
+        element.bottom = false
 
+        //Give it special price if there was an event for that product
         if(eventInformation != null && eventInformation.id == element.id){
             min = eventInformation.min
             max = eventInformation.max
-            console.log(eventInformation)
+
+            if(eventInformation.bottom){
+              element.bottom = eventInformation.bottom
+              self.currentEvents.push(element.bottomEvent)
+            }else{
+              element.outrageous = eventInformation.outrageous
+              self.currentEvents.push(element.outrageousEvent)
+            }
         }
 
+        // Notify of event 
+        if(self.currentEvents.length !== 0){
+          self.eventDialog = true;
+        }
+
+        // Get a random price within it's range
         element.price = Math.floor(Math.random() * (max - min) + min);
       });
-
-      //News bulletin bottom out or outrageous
-
     },
     randomiseEvent(){
-      //Implement more than 1 random event
-
+      //TODO: Implement more than 1 random event
       const self = this;
 
+      //1 in 3 chance of an event
       let eventChance = 2;
       let rand = Math.floor(Math.random() * Math.floor(3))
 
       if(rand == eventChance){
+        //Randomly select a product to apply event to
         let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
 
+        //Randomly select if its bottom out or price rise. 50.50 chance
         if(Math.floor(Math.random() * 2) == 1){
           return {
             id: randProdId, 
             min: self.products[randProdId].outrageousmin,
-            max: self.products[randProdId].outrageousmax
+            max: self.products[randProdId].outrageousmax,
+            outrageous: true,
+            bottom: false,
           }
         }else{
           return {
             id: randProdId,
             min: self.products[randProdId].bottomoutmin,
-            max: self.products[randProdId].bottomoutmax
+            max: self.products[randProdId].bottomoutmax,
+            outrageous: false,
+            bottom: true,
           }
         }
       }
@@ -414,17 +619,13 @@ export default {
       }
     },
     updateCashBuy(payload){
+      // update amount of cash after buying product 
       const self = this;
-      console.log("INSIDE UPDATE")
-      console.log(payload)
-
       self.cash = self.cash - payload;
     },
     updateCashSell(payload){
+      // update amount of cash after selling product
       const self = this;
-      console.log("INSIDE UPDATE")
-      console.log(payload)
-
       self.cash += payload;
     },
     changeLocation(location){
@@ -444,23 +645,27 @@ export default {
     debtIncrease(){
       const self = this;
       self.debt = Math.floor(self.debt * 1.1)
+    },
+    payDebt(){
+      const self = this;
+      self.debt = self.debt - self.payDebtAmount
+      self.cash = self.cash - self.payDebtAmount
+      self.debtDialog = false;
     }
   },
   created(){
     const self = this;
     self.getPrices();
     self.currentLocation = self.locations[0];
-
   }
 };
 </script>
 
 <style scoped>
-@media (max-width: 100px) {
-  /* CSS that should be displayed if width is equal to or less than 800px goes here */
-  .marginright{
-    margin-right: 15%;
-  }
+.bottom{
+  color:green
 }
-
+.outrageous{
+  color:red
+}
 </style>
