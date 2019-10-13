@@ -1,4 +1,11 @@
 <template>
+    <!-- Whats Left:
+      selling - & avg amount product was bought for display
+      locations
+      events & Implement more than 1 random event
+      police
+      Debt 
+      -->
   <v-container>
     <!-- End Game dialog box  -->
     <div class="text-center">
@@ -40,30 +47,44 @@
       </v-dialog>
     </div>
 
-    <v-layout wrap>
+    <!-- <v-layout wrap>
         <v-flex>
         <h1 class="display-2 font-weight-bold mb-3">
           Day {{days}}/30
         </h1>
       </v-flex>
-    </v-layout>
+    </v-layout> -->
 
     <v-layout wrap>
      <!-- Dashboard -->
-     <v-flex xs12 md4 mb-3>
+     <v-flex xs12 md4 offset-md4 mb-3>
        <v-card style="text-align:center;">
-         <v-flex pt-5>
-           <h4>Cash</h4>
-           £{{cash}}
-         </v-flex>
-         <v-flex>
-           <h4>Debt</h4>
-           £{{debt}}
-         </v-flex>
-         <v-flex>
-           <h4>Inventory</h4>
-           {{inventoryProducts.length}}/{{inventoryAmount}}
-         </v-flex>
+           <v-layout pt-2>
+             <v-flex xs6>
+              <h1 class="font-weight-bold mb-3">
+                 Day {{days}}/30
+              </h1>
+             </v-flex>
+             <v-flex xs6>
+              <h1>Location</h1>
+             </v-flex>
+           </v-layout>
+
+           <v-layout>
+             <v-flex xs4>
+               <h5>Debt</h5>
+               £{{Number(debt).toLocaleString()}}
+             </v-flex>
+             <v-flex xs4>
+               <h2>Cash</h2>
+                £{{Number(cash).toLocaleString()}}
+             </v-flex>
+             <v-flex xs4>
+               <h5>Inventory</h5>
+                {{inventoryProducts.length}}/{{inventoryAmount}}
+             </v-flex>
+           </v-layout>
+
          <v-flex mt-3 pb-5>
            <v-btn color="info" @click="nextDay">{{turnBtn}}</v-btn>
          </v-flex>
@@ -71,13 +92,9 @@
      </v-flex>
 
      <!-- Products -->
-     <v-flex xs12 md7 offset-md1>
+     <v-flex xs12 md4 offset-md4>
        <v-layout row>
-         <product @updateCash="updateCash" :products = products :inventoryamount="inventoryAmount" :cash="cash" :inventoryproducts="inventoryProducts"></product>
-
-
-
-
+         <product @updateCashBuy="updateCashBuy" @updateCashSell="updateCashSell" :products = products :inventoryamount="inventoryAmount" :cash="cash" :inventoryproducts="inventoryProducts"></product>
          <!-- <v-flex xs12 mx-3 mb-3 v-for="(product,i) in products" :key="i">
           <product @updateCash="updateCash" :disabled="isExpandDisable" :product="product" :inventoryamount="inventoryAmount" :cash="cash" :inventoryproducts="inventoryProducts">
           </product>
@@ -103,7 +120,7 @@ export default {
     days:1,
     inventoryAmount: 100,
     debt: 2000,
-    cash: 500000,
+    cash: 2000,
     products:[
       {
         id: 0,
@@ -278,10 +295,12 @@ export default {
         element.price = Math.floor(Math.random() * (max - min) + min);
       });
 
-      //New bulletin bottom out or outrageous
+      //News bulletin bottom out or outrageous
 
     },
     randomiseEvent(){
+      //Implement more than 1 random event
+
       const self = this;
 
       let eventChance = 2;
@@ -320,12 +339,19 @@ export default {
       }
 
     },
-    updateCash(payload){
+    updateCashBuy(payload){
       const self = this;
       console.log("INSIDE UPDATE")
       console.log(payload)
 
-      self.cash = payload;
+      self.cash = self.cash - payload;
+    },
+    updateCashSell(payload){
+      const self = this;
+      console.log("INSIDE UPDATE")
+      console.log(payload)
+
+      self.cash += payload;
     }
 
   },

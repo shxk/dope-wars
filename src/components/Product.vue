@@ -1,5 +1,6 @@
 <template>
-<v-flex mx-3>
+<v-container style="overflow:auto; height:350px;">
+    <v-flex mx-3>
     <v-expansion-panels>
         <v-expansion-panel v-for="(product,i) in products" :key="i" style="margin-bottom:2%;">
             <v-expansion-panel-header @click="closeExpandableTabs()">
@@ -7,8 +8,9 @@
                 <v-row no-gutters>
                     <v-col cols="12"><h3>{{product.name}}</h3></v-col>
                     <v-col cols="12"><h3> - </h3></v-col>
-                    
-                    <v-col cols="12"> <h4>£{{product.price}}</h4></v-col>
+                    <v-col cols="12"> <h4>£{{Number(product.price).toLocaleString()}}</h4></v-col>
+                    <v-col cols="3"> <h4>Inventory : {{ currentProdInv(product) }} </h4></v-col>
+                    <v-col cols="6"> <h4>Avg. Purchase Price : £{{ Number(avgPurchasePrice(product)).toLocaleString() }} </h4></v-col>
                 </v-row>
                 </template>
             </v-expansion-panel-header>
@@ -69,7 +71,7 @@
                 >
                     <v-layout>
                         <v-flex xs4 mb-2>
-                            {{product.name}}  £ {{product.price}}
+                            {{product.name}}  £ {{Number(product.price).toLocaleString()}}
                         </v-flex>
                         <v-flex xs2 offset-xs6 mb-2>
                             <v-btn text @click="sellOverlay = !sellOverlay, sellQuantity = 0, $store.commit('unsetDisable')">X</v-btn>
@@ -103,6 +105,9 @@
         </v-expansion-panel>
     </v-expansion-panels>
 </v-flex>
+
+</v-container>
+
     
  <!-- <v-expansion-panels focusable :disabled="disabled">
     <v-expansion-panel>
@@ -231,8 +236,36 @@ export default {
         sellQuantity: 0,
     }),
     computed:{
+        
     },
     methods:{
+        currentProdInv(product){
+            const self = this;
+            let count = 0;
+            for (let i = 0; i < self.inventoryproducts.length; i++) {
+                if(self.inventoryproducts[i].id == product.id){
+                    count++
+                }
+            }
+            return count
+        },
+        avgPurchasePrice(product){
+            const self = this;
+            let count = 0;
+            let avgPP = 0;
+
+            for (let i = 0; i < self.inventoryproducts.length; i++) {
+                if(self.inventoryproducts[i].id == product.id){
+                    count++
+                    avgPP += self.inventoryproducts[i].price
+                }
+            }
+            
+            if(count>0)
+                // avgPP = Math.floor(avgPP/count);
+                avgPP = Math.floor(avgPP/count)
+            return avgPP
+        },
         closeExpandableTabs(){
             const self = this;
             self.buyOverlay = false;
@@ -276,7 +309,7 @@ export default {
             while(self.quantity < inventoryLeft && self.quantity < maxInventory){
                 self.quantity++
             }
-            self.quantity = self.quantity /2
+            self.quantity = Math.floor(self.quantity /2)
         },
         buyProduct(product){
             const self = this;
@@ -285,9 +318,10 @@ export default {
 
             if(purchasePrice <= self.cash && self.quantity > 0){
                 for (let i = 0; i < self.quantity; i++) {
+                    //push without memory reference so it is a copy not a linked thing
                     self.inventoryproducts.push(product)
                 } 
-                self.$emit('updateCash', self.cash - purchasePrice)    
+                self.$emit('updateCashBuy', purchasePrice)    
             }
             self.buyOverlay = false;
         },
@@ -352,12 +386,11 @@ export default {
                     sold++
                     console.log("SOLDD")
                     self.inventoryproducts.splice(i,1)
+                    self.$emit('updateCashSell', product.price)    
+                    i = -1;
                 }
             }
-            
-
-            // self.$emit('updateCash', self.cash + salePrice)    
-            
+            self.sellOverlay = false;
         },
     }
 
