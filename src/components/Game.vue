@@ -73,10 +73,15 @@
      <!-- Products -->
      <v-flex xs12 md7 offset-md1>
        <v-layout row>
-         <v-flex xs12 mx-3 mb-3 v-for="(product,i) in products" :key="i">
-          <product :product="product">
+         <product @updateCash="updateCash" :products = products :inventoryamount="inventoryAmount" :cash="cash" :inventoryproducts="inventoryProducts"></product>
+
+
+
+
+         <!-- <v-flex xs12 mx-3 mb-3 v-for="(product,i) in products" :key="i">
+          <product @updateCash="updateCash" :disabled="isExpandDisable" :product="product" :inventoryamount="inventoryAmount" :cash="cash" :inventoryproducts="inventoryProducts">
           </product>
-         </v-flex>
+         </v-flex> -->
        </v-layout>
      </v-flex>
 
@@ -87,6 +92,7 @@
 
 <script>
 import Product from "./Product";
+import store from "../store"
 export default {
   components: {
     Product
@@ -97,7 +103,7 @@ export default {
     days:1,
     inventoryAmount: 100,
     debt: 2000,
-    cash: 2000,
+    cash: 500000,
     products:[
       {
         id: 0,
@@ -248,6 +254,12 @@ export default {
       }
     ]
   }),
+  computed:{
+    isExpandDisable(){
+      return this.$store.state.expandDisable
+    }
+
+  },
   methods:{
     getPrices(){
       const self = this;
@@ -307,6 +319,13 @@ export default {
         console.log(`Game over, you finished the game with £${self.cash} ` )
       }
 
+    },
+    updateCash(payload){
+      const self = this;
+      console.log("INSIDE UPDATE")
+      console.log(payload)
+
+      self.cash = payload;
     }
 
   },
