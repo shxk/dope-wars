@@ -788,7 +788,6 @@ export default {
     const self = this;
     self.getPrices();
     self.currentLocation = self.locations[0];
-    console.log(Math.floor(Math.random() * Math.floor(6)))
   }
 };
 </script>
