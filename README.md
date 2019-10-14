@@ -1,5 +1,8 @@
 # dope-wars
 
+https://dopewarsjs.web.app/
+https://dopewarsjs.netlify.com
+
 ## Project setup
 ```
 npm install
