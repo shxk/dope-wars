@@ -1,7 +1,10 @@
 <template>
     <!-- Whats Left:
-      events & Implement more than 1 random event
-      police
+      cancel moving location - done
+      police - done
+
+      extra inventory
+      Implement more than 1 random event
       collapse tab when going next day
       -->
   <v-container>
@@ -51,8 +54,7 @@
     <!-- Move Location dialog box  -->
     <div class="text-center">
       <v-dialog
-        v-model="locationDialog"
-        persistent 
+        v-model="locationDialog" 
         width="500"
       >
         <v-card
@@ -80,7 +82,7 @@
     </div>
 
     <!-- Events dialog box  -->
-    <div class="text-center">
+    <div v-if="!policeDialog" class="text-center">
       <v-dialog
         v-model="eventDialog"
         width="500"
@@ -174,6 +176,56 @@
       </v-dialog>
     </div>
 
+    <!-- Police event dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="policeDialog"
+        persistent
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Police
+          </v-card-title>
+
+          <v-card-text style="text-align:center;">
+            {{policeDialogMessage}}
+          </v-card-text>
+          <v-card-text v-if="bigPercentageCut > 0" style="text-align:center; color: red;">
+            -{{bigPercentageCut}}%
+          </v-card-text>
+          <v-card-text v-if="smallPercentageCut > 0" style="text-align:center; color: red;">
+            -{{smallPercentageCut}}%
+          </v-card-text>
+
+          <v-layout>
+              <v-flex xs4 offset-xs3 mt-3 pb-5>
+                <v-btn v-if="policeDialogClose" text color="warning" @click="actionPoliceEvent(1)">Co op</v-btn>
+              </v-flex>
+              <v-flex xs4 mt-3 pb-5>
+                <v-btn v-if="policeDialogClose" text color="warning" @click="actionPoliceEvent(2)">Run</v-btn>
+              </v-flex>
+          </v-layout>
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              :disabled="policeDialogClose"
+              color="primary"
+              text
+              @click="closePoliceEvent()"
+            >
+              Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
     <v-layout wrap>
      <!-- Dashboard -->
      <v-flex xs12 md4 offset-md4 mb-3>
@@ -225,7 +277,6 @@
          </v-flex> -->
        </v-layout>
      </v-flex>
-
     </v-layout>
 
   </v-container>
@@ -243,6 +294,11 @@ export default {
     locationDialog: false,
     eventDialog: false,
     debtDialog: false,
+    policeDialog: false,
+    policeDialogClose: true,
+    policeDialogMessage: "Police approach you as they have suspicion of your activites and want to bring you in for questioning. Do you want to co operate or run?",
+    bigPercentageCut: 0,
+    smallPercentageCut: 0,
     turnBtn: "Next Day",
     days:1,
     inventoryAmount: 100,
@@ -541,6 +597,7 @@ export default {
       }
       
     },
+
     getPrices(){
       const self = this;
       //Randomise event
@@ -568,15 +625,16 @@ export default {
               self.currentEvents.push(element.outrageousEvent)
             }
         }
-
-        // Notify of event 
-        if(self.currentEvents.length !== 0){
-          self.eventDialog = true;
-        }
-
         // Get a random price within it's range
         element.price = Math.floor(Math.random() * (max - min) + min);
       });
+      //check for police event
+      self.randomisePoliceEvent()
+
+      // Notify of event 
+        if(self.currentEvents.length !== 0){
+          self.eventDialog = true;
+        }
     },
     randomiseEvent(){
       //TODO: Implement more than 1 random event
@@ -610,14 +668,76 @@ export default {
         }
       }
     },
-    nextDay(){
+
+
+    randomisePoliceEvent(){
       const self = this;
-      if(self.days < 30){
-        self.locationDialog = true;
-      }else{
-        self.dialog = true;
+
+      if(self.days > 9 && self.cash > 30000){
+        let policeEventChance = 3
+        let rand = Math.floor(Math.random() * Math.floor(6))
+
+        if(rand == policeEventChance){
+          self.policeDialog = true;
+        }
       }
     },
+    actionPoliceEvent(event){
+      const self = this;
+      switch (event) {
+        case 1:
+          //choose to co op. 1/8 chance of owing a big cut e.g. 60-70. else owe 5-15%
+          let coopChance = 4
+          let coopRand = Math.floor(Math.random() * Math.floor(8))
+
+          let bigPercentage = Math.random() * (0.70 - 0.60) + 0.60;
+
+          let smallPercentage = Math.random() * (0.15 - 0.05) + 0.05;
+        
+          if(coopRand == coopChance){
+            self.bigPercentageCut = (bigPercentage*100).toFixed(0)
+
+            self.policeDialogMessage = `You went in to co-operate with them and they have you dead to rights. One dirty cop is looking to make bank
+            so finesses you for a ${self.bigPercentageCut}% cut of your cash`
+
+            // cash - percentage
+            self.cash = self.cash - (self.cash * bigPercentage.toFixed(2))
+          }else{
+            self.smallPercentageCut = (smallPercentage*100).toFixed(0)
+
+            self.policeDialogMessage = `Cops find a little something on you that could put you away for a few years. One dirty cop 
+            takes a little ${self.smallPercentageCut}% cut for destroying the evidence`
+
+            // cash - percentage
+            self.cash = self.cash - (self.cash * smallPercentage.toFixed(2))
+          }
+          self.policeDialogClose = false;
+          break;
+        case 2:
+          //chose to run. 1/4 chance of getting caught else lose all product and half cash
+          let runChance = 2
+          let runRand = Math.floor(Math.random() * Math.floor(4))
+          if(runRand == runChance){
+            self.policeDialogMessage = "You tried to run, but got caught. Police confiscated all your product and half your cash"
+            self.inventoryProducts = []
+            self.cash = Math.floor(self.cash/2);
+          }else{
+            self.policeDialogMessage = "You got away safely."
+          }
+          self.policeDialogClose = false
+          break;
+      }
+    },
+    closePoliceEvent(){
+      const self = this;
+      self.policeDialog = false
+      self.bigPercentageCut = 0
+      self.smallPercentageCut = 0
+      self.policeDialogClose = true
+      self.policeDialogMessage = "Police approach you as they have suspicion of your activites and want to bring you in for questioning. Do you want to co operate or run?"
+    },
+
+  
     updateCashBuy(payload){
       // update amount of cash after buying product 
       const self = this;
@@ -627,6 +747,15 @@ export default {
       // update amount of cash after selling product
       const self = this;
       self.cash += payload;
+    },
+
+    nextDay(){
+      const self = this;
+      if(self.days < 30){
+        self.locationDialog = true;
+      }else{
+        self.dialog = true;
+      }
     },
     changeLocation(location){
       const self = this;
@@ -642,6 +771,8 @@ export default {
 
       self.locationDialog = false;
     },
+
+
     debtIncrease(){
       const self = this;
       self.debt = Math.floor(self.debt * 1.1)
@@ -657,6 +788,7 @@ export default {
     const self = this;
     self.getPrices();
     self.currentLocation = self.locations[0];
+    console.log(Math.floor(Math.random() * Math.floor(6)))
   }
 };
 </script>
