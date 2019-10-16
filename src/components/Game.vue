@@ -1,6 +1,5 @@
 <template>
     <!-- Whats Left:
-      bank
       extra inventory
       collapse tab when going next day
       -->
@@ -417,16 +416,9 @@ export default {
         price:0,
         minprice: 17000,
         maxprice: 29000,
-        bottomoutmin: 6000,
-        bottomoutmax: 13000,
         outrageousmin: 60000,
         outrageousmax: 120000,
-        bottom:false,
         outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"There's been a suspicious amount of cocaine pumped into the city... prices have bottomed out!",
-        },
         outrageousEvent:{
           type:1,
           message:"Cops have made a massive drug bust, cocaine prices have skyrocketed!",
@@ -438,16 +430,9 @@ export default {
         price:0,
         minprice: 7000,
         maxprice: 15000,
-        bottomoutmin: 3000,
-        bottomoutmax: 5000,
         outrageousmin: 35000,
         outrageousmax: 50000,
-        bottom:false,
         outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"Market is flooded with cheap heroin!",
-        },
         outrageousEvent:{
           type:1,
           message:"Addicts can't get enough. Heroin prices are up!",
@@ -458,21 +443,7 @@ export default {
         name:"Speed", 
         price:0,
         minprice: 150,
-        maxprice: 250,
-        bottomoutmin: 60,
-        bottomoutmax: 100,
-        outrageousmin: 400,
-        outrageousmax: 700,
-        bottom:false,
-        outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"Speed prices have bottomed out!",
-        },
-        outrageousEvent:{
-          type:1,
-          message:"Speed prices are up!",
-        }
+        maxprice: 300,
       },
       {
         id:3,
@@ -501,16 +472,9 @@ export default {
         price:0,
         minprice: 600,
         maxprice: 1200,
-        bottomoutmin: 300,
-        bottomoutmax: 450,
         outrageousmin: 2500,
         outrageousmax: 7000,
-        bottom:false,
         outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"Opium prices have bottomed out!",
-        },
         outrageousEvent:{
           type:1,
           message:"Opium addiction! Prices are up",
@@ -522,20 +486,6 @@ export default {
         price:0,
         minprice: 1200,
         maxprice: 2500,
-        bottomoutmin: 850,
-        bottomoutmax: 1000,
-        outrageousmin: 4000,
-        outrageousmax: 6000,
-        bottom:false,
-        outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"PCP prices have bottomed out!",
-        },
-        outrageousEvent:{
-          type:1,
-          message:"PCP prices are up!",
-        }
       },
       {
         id:6,
@@ -543,16 +493,9 @@ export default {
         price:0,
         minprice: 400,
         maxprice: 900,
-        bottomoutmin: 200,
-        bottomoutmax: 250,
         outrageousmin: 5000,
         outrageousmax: 8000,
-        bottom:false,
         outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"Meth prices have bottomed out!",
-        },
         outrageousEvent:{
           type:1,
           message:"A strange blue coloured meth has got people hooked. People are paying outrageous amounts",
@@ -566,17 +509,10 @@ export default {
         maxprice: 60,
         bottomoutmin: 3,
         bottomoutmax: 6,
-        outrageousmin: 110,
-        outrageousmax: 190,
         bottom:false,
-        outrageous:false,
         bottomEvent:{
           type:0,
           message:"Local pharmacy raided, cheap ludes available !",
-        },
-        outrageousEvent:{
-          type:1,
-          message:"People can't sleep it seems, Ludes have risen in price!",
         }
       },
       {
@@ -608,39 +544,18 @@ export default {
         maxprice: 700,
         bottomoutmin: 100,
         bottomoutmax: 150,
-        outrageousmin: 900,
-        outrageousmax: 1200,
         bottom:false,
-        outrageous:false,
         bottomEvent:{
           type:0,
           message:"Cactus Jack's in town! Cheap peyote.",
         },
-        outrageousEvent:{
-          type:1,
-          message:"Peyote prices are up!",
-        }
       },
       {
         id:10,
         name:"Ecstasy",
         price:0,
         minprice: 100,
-        maxprice: 200,
-        bottomoutmin: 15,
-        bottomoutmax: 50,
-        outrageousmin: 250,
-        outrageousmax: 350,
-        bottom:false,
-        outrageous:false,
-        bottomEvent:{
-          type:0,
-          message:"X gon give it to ya. Ecstasy prices have bottomed out!",
-        },
-        outrageousEvent:{
-          type:1,
-          message:"X ain't gon give it to ya. Ecstasy prices are up!",
-        }
+        maxprice: 350,
       },
       {
         id:11,
@@ -765,9 +680,10 @@ export default {
         //12%
         for (let index = 0; index < 2; index++) {
           let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
-          if (!usedEvents.includes(randProdId)) {
-              usedEvents.push(randProdId)
-              eventsList.push(self.randomiseEventProducts(randProdId))
+
+          if (!usedEvents.includes(randProdId) && (self.products[randProdId].bottomEvent || self.products[randProdId].outrageousEvent)) {
+            usedEvents.push(randProdId)
+            eventsList.push(self.randomiseEventProducts(randProdId))
           }else{
             index--
           }
@@ -776,9 +692,20 @@ export default {
       }else if(eventChance < 0.45){
         //1 event
         //33%
-        let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
-        eventsList.push(self.randomiseEventProducts(randProdId))
+        console.log("EVENT")
+        for (let index = 0; index < 1; index++) {
+          let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
+
+          //Checks if product has any type of event
+          if (self.products[randProdId].bottomEvent || self.products[randProdId].outrageousEvent){
+            eventsList.push(self.randomiseEventProducts(randProdId))
+          }else{
+            //Go again to get a new random number
+            index--
+          }
+        }
         return eventsList
+          
       }else{
         return null
       }
@@ -787,7 +714,8 @@ export default {
     randomiseEventProducts(randProdId){
       const self = this;
 
-      if(Math.random() < 0.5){
+      // if it only has outrageous price or can go straight in, or if it does have both types price, give it chance to be outrageous 
+      if((!self.products[randProdId].bottomEvent && self.products[randProdId].outrageousEvent) || (Math.random() < 0.5 && self.products[randProdId].outrageousEvent)){
         return{
           id: randProdId, 
           min: self.products[randProdId].outrageousmin,
