@@ -133,6 +133,9 @@ export default {
         sellQuantity: 0,
     }),
     computed:{
+        inventoryLeft(){
+            return this.inventoryamount - this.inventoryproducts.length
+        }
         
     },
     methods:{
@@ -172,43 +175,35 @@ export default {
             self.quantity = 0
             self.sellQuantity = 0;
         },
+
+
+        
         decreaseBuyQuantity(){
             const self = this;
             self.quantity != 0 ? self.quantity-- : ""
         },
         increaseBuyQuantity(product){
             const self = this;
-            let inventoryLeft = self.inventoryamount - self.inventoryproducts.length
-            let maxInventory = Math.floor(self.cash/product.price);
-
-            if(self.quantity < inventoryLeft && self.quantity < maxInventory){
+            if(self.quantity < self.inventoryLeft && self.quantity < self.maxAllowedToBuy(product)){
                 self.quantity++
             }
         },
         maxBuyQuantity(product){
             const self = this;
-
-            let inventoryLeft = self.inventoryamount - self.inventoryproducts.length
-            let maxInventory = Math.floor(self.cash/product.price);
-
-            while(self.quantity < inventoryLeft && self.quantity < maxInventory){
+            while(self.quantity < self.inventoryLeft && self.quantity < self.maxAllowedToBuy(product)){
                 self.quantity++
             }
-
-
-
-            // self.quantity = Math.floor(self.cash/product.price);
         },
         halfBuyQuantity(product){
             const self = this;
-
-            let inventoryLeft = self.inventoryamount - self.inventoryproducts.length
-            let maxInventory = Math.floor(self.cash/product.price);
-
-            while(self.quantity < inventoryLeft && self.quantity < maxInventory){
+            while(self.quantity < self.inventoryLeft && self.quantity < self.maxAllowedToBuy(product)){
                 self.quantity++
             }
             self.quantity = Math.floor(self.quantity /2)
+        },
+        maxAllowedToBuy(product){
+            const self = this
+            return Math.floor(self.cash/product.price)
         },
         buyProduct(product){
             const self = this;
@@ -225,56 +220,39 @@ export default {
         },
 
 
-
+        
         decreaseSellQuantity(){
             const self = this;
             self.sellQuantity > 0 ? self.sellQuantity-- : ""
         },
         increaseSellQuantity(product){
             const self = this;
-
-            let amountAvaliableToSell = 0;
-
-            self.inventoryproducts.forEach(element=>{
-                if(product.id == element.id){
-                    amountAvaliableToSell++
-                }
-            });
-
-            if(self.sellQuantity < amountAvaliableToSell){
+            if(self.sellQuantity < self.maxAllowedToSell(product)){
                 self.sellQuantity++
             }
         },
         maxSellQuantity(product){
             const self = this;
-            let amountAvaliableToSell = 0;
-
-            self.inventoryproducts.forEach(element=>{
-                if(product.id == element.id){
-                    amountAvaliableToSell++
-                }
-            });
-
-            self.sellQuantity = amountAvaliableToSell;
+            self.sellQuantity = self.maxAllowedToSell(product);
             
         },
         halfSellQuantity(product){
             const self = this;
+            self.sellQuantity = Math.floor(self.maxAllowedToSell(product)/2);
+        },
+        maxAllowedToSell(product){
+            const self = this;
             let amountAvaliableToSell = 0;
-
             self.inventoryproducts.forEach(element=>{
                 if(product.id == element.id){
                     amountAvaliableToSell++
                 }
             });
-
-            self.sellQuantity = amountAvaliableToSell/2;
+            return amountAvaliableToSell
         },
         sellProduct(product){
             const self = this;
-
             let salePrice = self.sellQuantity * product.price
-
             let sold = 0;
 
             for(let i = 0; i < self.inventoryproducts.length; i++){
@@ -285,6 +263,7 @@ export default {
                     i = -1;
                 }
             }
+            self.sellQuantity = 0;
             self.sellOverlay = false;
         },
     }
