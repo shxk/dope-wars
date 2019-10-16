@@ -1,10 +1,7 @@
 <template>
     <!-- Whats Left:
-      cancel moving location - done
-      police - done
-
+      bank
       extra inventory
-      Implement more than 1 random event
       collapse tab when going next day
       -->
   <v-container>
@@ -176,6 +173,102 @@
       </v-dialog>
     </div>
 
+    <!-- Bank dialog box  -->
+    <div class="text-center">
+      <v-dialog
+        v-model="bankDialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Bank £{{Number(bank).toLocaleString()}}
+          </v-card-title>
+
+          <v-card-text style="text-align:center;">
+            <v-layout v-if="!withdrawSelected && !depositSelected">
+              <v-flex mt-3 xs6>
+                <v-btn color="warning" @click="withdrawSelected = true">
+                  Withdraw
+                </v-btn>
+              </v-flex>
+              <v-flex mt-3 xs6>
+                <v-btn color="success" @click="depositSelected = true">
+                  Deposit
+                </v-btn>
+              </v-flex>
+            </v-layout>
+
+            <v-row v-if="depositSelected">
+              <v-col class="pr-4">
+                <v-slider
+                  v-model="depositAmount"
+                  class="align-center"
+                  :max="cash"
+                  :min="0"
+                  hide-details
+                >
+                  <template v-slot:append>
+                    <v-text-field
+                      v-model="depositAmount"
+                      class="mt-0 pt-0"
+                      hide-details
+                      single-line
+                      type="number"
+                      style="width: 60px"
+                    ></v-text-field>
+                  </template>
+                </v-slider>
+              </v-col>
+            </v-row>
+            <v-row v-if="withdrawSelected">
+              <v-col class="pr-4">
+                <v-slider
+                  v-model="withdrawAmount"
+                  class="align-center"
+                  :max="bank"
+                  :min="0"
+                  hide-details
+                >
+                  <template v-slot:append>
+                    <v-text-field
+                      v-model="withdrawAmount"
+                      class="mt-0 pt-0"
+                      hide-details
+                      single-line
+                      type="number"
+                      style="width: 60px"
+                    ></v-text-field>
+                  </template>
+                </v-slider>
+              </v-col>
+            </v-row>
+
+            <v-row v-if="depositSelected || withdrawSelected">
+              <v-col>
+                <v-btn color="success" @click="confirmBankTransaction()"><v-icon dark>mdi-check-circle-outline</v-icon></v-btn>
+              </v-col>
+            </v-row>
+          </v-card-text>
+
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              color="primary"
+              text
+              @click="bankDialog = false"
+            >
+              Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+    
     <!-- Police event dialog box  -->
     <div class="text-center">
       <v-dialog
@@ -203,10 +296,10 @@
 
           <v-layout>
               <v-flex xs4 offset-xs3 mt-3 pb-5>
-                <v-btn v-if="policeDialogClose" text color="warning" @click="actionPoliceEvent(1)">Co op</v-btn>
+                <v-btn v-if="policeDisableClose" text color="warning" @click="actionPoliceEvent(1)">Co op</v-btn>
               </v-flex>
               <v-flex xs4 mt-3 pb-5>
-                <v-btn v-if="policeDialogClose" text color="warning" @click="actionPoliceEvent(2)">Run</v-btn>
+                <v-btn v-if="policeDisableClose" text color="warning" @click="actionPoliceEvent(2)">Run</v-btn>
               </v-flex>
           </v-layout>
           <v-divider></v-divider>
@@ -214,7 +307,7 @@
           <v-card-actions>
             <div class="flex-grow-1"></div>
             <v-btn
-              :disabled="policeDialogClose"
+              :disabled="policeDisableClose"
               color="primary"
               text
               @click="closePoliceEvent()"
@@ -263,6 +356,9 @@
               <v-flex xs4 mt-3 pb-5>
                 <v-btn color="info" @click="nextDay">{{turnBtn}}</v-btn>
               </v-flex>
+              <v-flex xs4 mt-3 pb-5>
+                <v-btn text color="success" @click="bankDialog = true">Bank</v-btn>
+              </v-flex>
           </v-layout>
        </v-card>
      </v-flex>
@@ -291,11 +387,16 @@ export default {
   },
   data: () => ({
     dialog: false,
+    bankDialog:false,
+    withdrawSelected: false,
+    depositSelected: false,
+    withdrawAmount: 0,
+    depositAmount: 0,
     locationDialog: false,
     eventDialog: false,
     debtDialog: false,
     policeDialog: false,
-    policeDialogClose: true,
+    policeDisableClose: true,
     policeDialogMessage: "Police approach you as they have suspicion of your activites and want to bring you in for questioning. Do you want to co operate or run?",
     bigPercentageCut: 0,
     smallPercentageCut: 0,
@@ -305,6 +406,7 @@ export default {
     payDebtAmount:0,
     debt: 5500,
     cash: 2000,
+    bank: 0,
     products:[
       {
         id: 0,
@@ -560,7 +662,6 @@ export default {
       }
     ],
     inventoryProducts:[
-      //Push object of products into here that includes name, id, and price bought at
     ],
     locations:[
       {id: 0, name:"London", icon: 'mdi-clock'},
@@ -584,9 +685,11 @@ export default {
     }
   },
   methods:{
+    //reload the game. need to refactor to initalise the data, so no need for refreshing
     newGame(){
       window.location.reload()
     },
+    //if the current location is selected disable it so user can't click it
     isLocationDisabled(location){
       const self = this;
 
@@ -598,133 +701,159 @@ export default {
       
     },
 
+    //get product prices. check for police events. display events
     getPrices(){
       const self = this;
-      //Randomise event
+      //Randomise possible events
       let eventInformation = self.randomiseEvent();
       //Empty array so that it doesn't push new events on old ones
       self.currentEvents = [];
 
-      self.products.forEach(element => {
-        let min = element.minprice;
-        let max = element.maxprice;
+      // loop through each product to give them a price
+      self.products.forEach(product => {
+        let min = product.minprice;
+        let max = product.maxprice;
+
         //Default the special prices so it doesn't carry on from previous turn
-        element.outrageous = false
-        element.bottom = false
+        product.outrageous = false
+        product.bottom = false
 
-        //Give it special price if there was an event for that product
-        if(eventInformation != null && eventInformation.id == element.id){
-            min = eventInformation.min
-            max = eventInformation.max
-
-            if(eventInformation.bottom){
-              element.bottom = eventInformation.bottom
-              self.currentEvents.push(element.bottomEvent)
-            }else{
-              element.outrageous = eventInformation.outrageous
-              self.currentEvents.push(element.outrageousEvent)
+        // if there are special events in the list the loop through and give those prices
+        if(eventInformation != null){
+          //loop through just in case there's multiple events
+          eventInformation.forEach(event => {
+            if (event.id == product.id) {
+              min = event.min
+              max = event.max
+              if(event.bottom){
+                product.bottom = event.bottom
+                self.currentEvents.push(product.bottomEvent)
+              }else{
+                product.outrageous = event.outrageous
+                self.currentEvents.push(product.outrageousEvent)
+              }
             }
+          })
         }
         // Get a random price within it's range
-        element.price = Math.floor(Math.random() * (max - min) + min);
+        product.price = Math.floor(Math.random() * (max - min) + min);
       });
+
+
       //check for police event
       self.randomisePoliceEvent()
 
       // Notify of event 
-        if(self.currentEvents.length !== 0){
-          self.eventDialog = true;
-        }
+      if(self.currentEvents.length !== 0){
+        self.eventDialog = true;
+      }
     },
+
+    //randomise events and its products it affects
     randomiseEvent(){
       //TODO: Implement more than 1 random event
       const self = this;
+      let eventChance = Math.random();
+      let eventsList = []
+      let usedEvents = []
 
-      //1 in 3 chance of an event
-      let eventChance = 2;
-      let rand = Math.floor(Math.random() * Math.floor(3))
-
-      if(rand == eventChance){
-        //Randomly select a product to apply event to
+      if(self.days > 10 && eventChance < 0.12){
+        // 2 events chance
+        //12%
+        for (let index = 0; index < 2; index++) {
+          let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
+          if (!usedEvents.includes(randProdId)) {
+              usedEvents.push(randProdId)
+              eventsList.push(self.randomiseEventProducts(randProdId))
+          }else{
+            index--
+          }
+        }
+        return eventsList
+      }else if(eventChance < 0.45){
+        //1 event
+        //33%
         let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
+        eventsList.push(self.randomiseEventProducts(randProdId))
+        return eventsList
+      }else{
+        return null
+      }
+    },
+    //if bottom or outrageous
+    randomiseEventProducts(randProdId){
+      const self = this;
 
-        //Randomly select if its bottom out or price rise. 50.50 chance
-        if(Math.floor(Math.random() * 2) == 1){
-          return {
-            id: randProdId, 
-            min: self.products[randProdId].outrageousmin,
-            max: self.products[randProdId].outrageousmax,
-            outrageous: true,
-            bottom: false,
-          }
-        }else{
-          return {
-            id: randProdId,
-            min: self.products[randProdId].bottomoutmin,
-            max: self.products[randProdId].bottomoutmax,
-            outrageous: false,
-            bottom: true,
-          }
+      if(Math.random() < 0.5){
+        return{
+          id: randProdId, 
+          min: self.products[randProdId].outrageousmin,
+          max: self.products[randProdId].outrageousmax,
+          outrageous: true,
+          bottom: false,
+        }
+      }else{
+        return{
+          id: randProdId,
+          min: self.products[randProdId].bottomoutmin,
+          max: self.products[randProdId].bottomoutmax,
+          outrageous: false,
+          bottom: true,
         }
       }
     },
 
 
+    //Police events
     randomisePoliceEvent(){
       const self = this;
+      let chance = Math.random()
 
-      if(self.days > 9 && self.cash > 30000){
-        let policeEventChance = 3
-        let rand = Math.floor(Math.random() * Math.floor(6))
-
-        if(rand == policeEventChance){
+      if(self.days > 1 && self.days< 9 && chance < 0.03){
           self.policeDialog = true;
-        }
+      }else if(self.days > 1 && self.days < 31 && chance <0.17){
+          self.policeDialog = true;
       }
     },
     actionPoliceEvent(event){
       const self = this;
       switch (event) {
         case 1:
-          //choose to co op. 1/8 chance of owing a big cut e.g. 60-70. else owe 5-15%
-          let coopChance = 4
-          let coopRand = Math.floor(Math.random() * Math.floor(8))
-
           let bigPercentage = Math.random() * (0.70 - 0.60) + 0.60;
-
           let smallPercentage = Math.random() * (0.15 - 0.05) + 0.05;
-        
-          if(coopRand == coopChance){
+
+          //choose to co op. 1/8 chance of owing a big cut e.g. 60-70. else owe 5-15%
+          if(Math.random() < 0.12){
             self.bigPercentageCut = (bigPercentage*100).toFixed(0)
 
-            self.policeDialogMessage = `You went in to co-operate with them and they have you dead to rights. One dirty cop is looking to make bank
-            so finesses you for a ${self.bigPercentageCut}% cut of your cash`
+            self.policeDialogMessage = `You went in to co-operate with 
+            them and they have you dead to rights. One dirty cop is looking to make 
+            bank so finesses you for a ${self.bigPercentageCut}% cut of your cash`
 
             // cash - percentage
             self.cash = self.cash - (self.cash * bigPercentage.toFixed(2))
           }else{
             self.smallPercentageCut = (smallPercentage*100).toFixed(0)
 
-            self.policeDialogMessage = `Cops find a little something on you that could put you away for a few years. One dirty cop 
-            takes a little ${self.smallPercentageCut}% cut for destroying the evidence`
-
+            self.policeDialogMessage = `Cops find a little something on you that 
+            could put you away for a few years. One dirty cop takes a little 
+            ${self.smallPercentageCut}% cut for destroying the evidence`
+            
             // cash - percentage
             self.cash = self.cash - (self.cash * smallPercentage.toFixed(2))
           }
-          self.policeDialogClose = false;
+          self.policeDisableClose = false;
           break;
         case 2:
-          //chose to run. 1/4 chance of getting caught else lose all product and half cash
-          let runChance = 2
-          let runRand = Math.floor(Math.random() * Math.floor(4))
-          if(runRand == runChance){
+          //hance of getting caught else lose all product and half cash
+          if(Math.random() < 0.25){
             self.policeDialogMessage = "You tried to run, but got caught. Police confiscated all your product and half your cash"
             self.inventoryProducts = []
             self.cash = Math.floor(self.cash/2);
           }else{
             self.policeDialogMessage = "You got away safely."
           }
-          self.policeDialogClose = false
+          self.policeDisableClose = false
           break;
       }
     },
@@ -733,11 +862,11 @@ export default {
       self.policeDialog = false
       self.bigPercentageCut = 0
       self.smallPercentageCut = 0
-      self.policeDialogClose = true
+      self.policeDisableClose = true
       self.policeDialogMessage = "Police approach you as they have suspicion of your activites and want to bring you in for questioning. Do you want to co operate or run?"
     },
 
-  
+    //emit events
     updateCashBuy(payload){
       // update amount of cash after buying product 
       const self = this;
@@ -749,6 +878,7 @@ export default {
       self.cash += payload;
     },
 
+    //move location or end game
     nextDay(){
       const self = this;
       if(self.days < 30){
@@ -772,7 +902,6 @@ export default {
       self.locationDialog = false;
     },
 
-
     debtIncrease(){
       const self = this;
       self.debt = Math.floor(self.debt * 1.1)
@@ -782,6 +911,25 @@ export default {
       self.debt = self.debt - self.payDebtAmount
       self.cash = self.cash - self.payDebtAmount
       self.debtDialog = false;
+    },
+
+    confirmBankTransaction(){
+      const self = this;
+
+      if (self.withdrawSelected && self.withdrawAmount > 0) {
+        self.cash += self.withdrawAmount
+        self.bank -= self.withdrawAmount
+      }else if(self.depositSelected && self.depositAmount > 0){
+        self.cash -= self.depositAmount
+        self.bank += self.depositAmount
+      }
+
+      self.withdrawAmount = 0
+      self.depositAmount = 0
+      self.withdrawSelected = false
+      self.depositSelected = false
+      self.bankDialog = false
+
     }
   },
   created(){
