@@ -23,13 +23,16 @@
             You finished the game with:
           </v-card-text>
           <v-card-text style="text-align:center;">
-            Account: £{{Number(cash).toLocaleString()}}
+            Cash: £{{Number(cash).toLocaleString()}}
+          </v-card-text>
+          <v-card-text style="text-align:center;">
+            Bank: £{{Number(bank).toLocaleString()}}
           </v-card-text>
           <v-card-text style="text-align:center;">
             Debt: £{{Number(debt).toLocaleString()}}
           </v-card-text>
           <v-card-text style="text-align:center;">
-            Final Amount: £{{Number(cash-debt).toLocaleString()}}
+            Final Amount: £{{Number((cash+bank)-debt).toLocaleString()}}
           </v-card-text>
 
           <v-divider></v-divider>
