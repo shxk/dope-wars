@@ -814,7 +814,7 @@ export default {
 
       if(self.days > 1 && self.days< 9 && chance < 0.03){
           self.policeDialog = true;
-      }else if(self.days > 1 && self.days < 31 && chance <0.17){
+      }else if(self.days > 9 && self.days < 31 && chance <0.17){
           self.policeDialog = true;
       }
     },
