@@ -336,7 +336,7 @@
           </v-card-title>
 
           <v-card-text style="text-align:center;">
-            Would you like to buy an extra {{extraInventoryAmount}} inventory slots?
+            Would you like to buy an extra {{extraInventoryAmount}} inventory slots for £{{Number(extraInventoryPrice).toLocaleString()}}?
           </v-card-text>
 
           <v-layout>
