@@ -23,10 +23,10 @@
                     <v-expansion-panel-content>
                         <v-layout style="text-align:center;">
                             <v-flex xs6 mt-4>
-                                <v-btn color="success" @click="buyOverlay = !buyOverlay, $store.commit('setDisable')">Buy</v-btn>
+                                <v-btn color="success" :disabled="cash < product.price" @click="buyOverlay = !buyOverlay">Buy</v-btn>
                             </v-flex>
                             <v-flex xs6 mt-4>
-                                <v-btn color="error" @click="sellOverlay = !sellOverlay, $store.commit('setDisable')">Sell</v-btn>
+                                <v-btn color="error" :disabled="currentProdInv(product) < 1" @click="sellOverlay = !sellOverlay">Sell</v-btn>
                             </v-flex>
                         </v-layout>
 
@@ -41,7 +41,7 @@
                                     {{product.name}}  £ {{product.price}}
                                 </v-flex>
                                 <v-flex xs2 offset-xs6 mb-2>
-                                    <v-btn text @click="buyOverlay = !buyOverlay, quantity = 0, $store.commit('unsetDisable')">X</v-btn>
+                                    <v-btn text @click="buyOverlay = !buyOverlay, quantity = 0">X</v-btn>
                                 </v-flex>
                             </v-layout>
                             
@@ -80,7 +80,7 @@
                                     {{product.name}}  £ {{Number(product.price).toLocaleString()}}
                                 </v-flex>
                                 <v-flex xs2 offset-xs6 mb-2>
-                                    <v-btn text @click="sellOverlay = !sellOverlay, sellQuantity = 0, $store.commit('unsetDisable')">X</v-btn>
+                                    <v-btn text @click="sellOverlay = !sellOverlay, sellQuantity = 0">X</v-btn>
                                 </v-flex>
                             </v-layout>
                             

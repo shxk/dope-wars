@@ -771,7 +771,7 @@ export default {
             ${self.smallPercentageCut}% cut for destroying the evidence`
             
             // cash - percentage
-            self.cash = self.cash - (self.cash * smallPercentage.toFixed(2))
+            self.cash = Math.floor(self.cash - (self.cash * smallPercentage.toFixed(2)))
           }
           self.policeDisableClose = false;
           break;
@@ -846,7 +846,6 @@ export default {
 
     confirmBankTransaction(){
       const self = this;
-
       if (self.withdrawSelected && self.withdrawAmount > 0) {
         self.cash += self.withdrawAmount
         self.bank -= self.withdrawAmount
