@@ -321,6 +321,49 @@
       </v-dialog>
     </div>
 
+    <!-- Extra inventory dialog box -->
+    <div v-if="!policeDialog && !eventDialog" class="text-center">
+      <v-dialog
+        v-model="extraInventoryDialog"
+        width="500"
+      >
+        <v-card>
+          <v-card-title
+            class="headline grey lighten-2"
+            primary-title
+          >
+            Extra Inventory
+          </v-card-title>
+
+          <v-card-text style="text-align:center;">
+            Would you like to buy an extra {{extraInventoryAmount}} inventory slots?
+          </v-card-text>
+
+          <v-layout>
+              <v-flex xs4 offset-xs3 mt-3 pb-5>
+                <v-btn  text color="warning" @click="extraInventoryDialog = false">No</v-btn>
+              </v-flex>
+              <v-flex xs4 mt-3 pb-5>
+                <v-btn :disabled="extraInventoryPrice > cash" text color="success" @click="buyExtraInventory()">Yes</v-btn>
+              </v-flex>
+          </v-layout>
+         
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <div class="flex-grow-1"></div>
+            <v-btn
+              color="primary"
+              text
+              @click="extraInventoryDialog = false"
+            >
+              Close
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </div>
+
     <v-layout wrap>
      <!-- Dashboard -->
      <v-flex xs12 md4 offset-md4 mb-3>
@@ -397,6 +440,9 @@ export default {
     locationDialog: false,
     eventDialog: false,
     debtDialog: false,
+    extraInventoryDialog: false,
+    extraInventoryAmount: 0,
+    extraInventoryPrice:0,
     policeDialog: false,
     policeDisableClose: true,
     policeDialogMessage: "Police approach you as they have suspicion of your activites and want to bring you in for questioning. Do you want to co operate or run?",
@@ -665,6 +711,8 @@ export default {
       if(self.currentEvents.length !== 0){
         self.eventDialog = true;
       }
+
+      self.randomiseExtraInventory()
     },
 
     //randomise events and its products it affects
@@ -692,7 +740,6 @@ export default {
       }else if(eventChance < 0.45){
         //1 event
         //33%
-        console.log("EVENT")
         for (let index = 0; index < 1; index++) {
           let randProdId = Math.floor(Math.random() * ((self.products.length) - 0) + 0)
 
@@ -762,7 +809,7 @@ export default {
             bank so finesses you for a ${self.bigPercentageCut}% cut of your cash`
 
             // cash - percentage
-            self.cash = self.cash - (self.cash * bigPercentage.toFixed(2))
+            self.cash = Math.floor(self.cash - (self.cash * bigPercentage.toFixed(2)))
           }else{
             self.smallPercentageCut = (smallPercentage*100).toFixed(0)
 
@@ -860,6 +907,23 @@ export default {
       self.depositSelected = false
       self.bankDialog = false
 
+    },
+    randomiseExtraInventory(){
+      const self = this;
+      self.extraInventoryAmount = 0;
+      self.extraInventoryPrice = Math.floor(Math.random()*(700 - 250) + 250)
+
+      if (self.days > 6 && Math.random() < 0.13) {
+        let randomisedExtraAmount = Math.floor(Math.random()*(30 - 8) + 8)
+        self.extraInventoryAmount = randomisedExtraAmount
+        self.extraInventoryDialog = true;
+      }
+    },
+    buyExtraInventory(){
+      const self = this
+      self.inventoryAmount += self.extraInventoryAmount
+      self.cash -= self.extraInventoryPrice
+      self.extraInventoryDialog = false
     }
   },
   created(){
