@@ -2,8 +2,11 @@
   <v-app>
     <v-app-bar app >
       <v-toolbar-title class="headline text-uppercase">
-        <span>Dope Wars v.1.3</span>
+        <span>Dope Wars</span>
       </v-toolbar-title>
+      <v-spacer></v-spacer>
+      <span>v.1.4</span>
+      
       
     </v-app-bar>
 

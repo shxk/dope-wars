@@ -1,6 +1,5 @@
 <template>
     <!-- Whats Left:
-      extra inventory
       collapse tab when going next day
       -->
   <v-container>
@@ -12,7 +11,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             Game Over
@@ -88,7 +87,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             News bulletin
@@ -123,7 +122,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             Pay Debt
@@ -183,7 +182,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             Bank £{{Number(bank).toLocaleString()}}
@@ -192,12 +191,12 @@
           <v-card-text style="text-align:center;">
             <v-layout v-if="!withdrawSelected && !depositSelected">
               <v-flex mt-3 xs6>
-                <v-btn color="warning" @click="withdrawSelected = true">
+                <v-btn color="warning" :disabled="!bank > 0" @click="withdrawSelected = true">
                   Withdraw
                 </v-btn>
               </v-flex>
               <v-flex mt-3 xs6>
-                <v-btn color="success" @click="depositSelected = true">
+                <v-btn color="success" :disabled="!cash > 0" @click="depositSelected = true">
                   Deposit
                 </v-btn>
               </v-flex>
@@ -219,7 +218,7 @@
                       hide-details
                       single-line
                       type="number"
-                      style="width: 60px"
+                      style="width: 100px"
                     ></v-text-field>
                   </template>
                 </v-slider>
@@ -248,11 +247,9 @@
               </v-col>
             </v-row>
 
-            <v-row v-if="depositSelected || withdrawSelected">
-              <v-col>
-                <v-btn color="success" @click="confirmBankTransaction()"><v-icon dark>mdi-check-circle-outline</v-icon></v-btn>
-              </v-col>
-            </v-row>
+            <v-flex v-if="depositSelected || withdrawSelected" >
+              <v-btn  color="success" @click="confirmBankTransaction()"><v-icon dark>mdi-check-circle-outline</v-icon></v-btn>
+            </v-flex>
           </v-card-text>
 
           <v-divider></v-divider>
@@ -262,7 +259,7 @@
             <v-btn
               color="primary"
               text
-              @click="bankDialog = false"
+              @click="bankDialogReset()"
             >
               Close
             </v-btn>
@@ -280,7 +277,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             Police
@@ -329,7 +326,7 @@
       >
         <v-card>
           <v-card-title
-            class="headline grey lighten-2"
+            class="headline grey darken-2"
             primary-title
           >
             Extra Inventory
@@ -370,12 +367,12 @@
        <v-card style="text-align:center;">
            <v-layout pt-2>
              <v-flex xs6>
-              <h1 class="font-weight-bold mb-3">
+              <h2 class="font-weight-bold mb-3">
                  Day {{days}}/30
-              </h1>
+              </h2>
              </v-flex>
              <v-flex xs6>
-              <h1>{{currentLocation.name}}</h1>
+              <h2>{{currentLocation.name}}</h2>
              </v-flex>
            </v-layout>
 
@@ -396,7 +393,7 @@
 
             <v-layout>
               <v-flex xs4 mt-3 pb-5>
-                <v-btn text color="warning" @click="debtDialog = true">Pay debt</v-btn>
+                <v-btn :disabled="!debt > 0" text color="warning" @click="debtDialog = true">Pay debt</v-btn>
               </v-flex>
               <v-flex xs4 mt-3 pb-5>
                 <v-btn color="info" @click="nextDay">{{turnBtn}}</v-btn>
@@ -632,7 +629,7 @@ export default {
       {id: 1, name:"Manchester", icon: 'mdi-clock'},
       {id: 2, name:"Birmingham", icon: 'mdi-clock'},
       {id: 3, name:"Leeds", icon: 'mdi-clock'},
-      {id: 4, name:"Bristol" , icon: 'mdi-clock'},
+      {id: 4, name:"Nottingham" , icon: 'mdi-clock'},
     ],
     currentLocation: {},
     currentEvents:[
@@ -901,12 +898,16 @@ export default {
         self.bank += self.depositAmount
       }
 
+      self.bankDialogReset()
+
+    },
+    bankDialogReset(){
+      const self = this
       self.withdrawAmount = 0
       self.depositAmount = 0
       self.withdrawSelected = false
       self.depositSelected = false
       self.bankDialog = false
-
     },
     randomiseExtraInventory(){
       const self = this;
